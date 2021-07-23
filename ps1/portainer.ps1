@@ -1,6 +1,7 @@
 $IMAGE="portainer/portainer-ce"
 $NAME="portainer"
-$PASS="you_should_probably_change_this"
+#$PASS="you_should_probably_change_this"
+$PASS="y56s1Csn0wn1Hn05iZDFdLkZai3GIZIRwZFjgbdy2rJilu98I9"
 
 docker pull $IMAGE
 docker stop $NAME

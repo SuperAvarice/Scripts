@@ -9,7 +9,7 @@ $PACKAGES = "openssh-client openssl curl sudo unzip wget vim git docker-compose"
 
 $SETUP_FILE = "${SCRIPT_PATH}\setup.ps1"
 if (!(Test-Path $SETUP_FILE)) {
-    Add-Content $SETUP_FILE "`$BASE_DIR `= `"D:\Workspace`""
+    Add-Content $SETUP_FILE "`$BASE_DIR `= `"C:\Workspace`""
 }
 . $SETUP_FILE
 

@@ -1,6 +1,6 @@
 $IMAGE="jlesage/firefox"
 $NAME="firefox"
-$VNCPASS="1yG46gsc"
+$VNCPASS="1yG46gsc" # Some 8 character password for the web interface
 
 docker pull $IMAGE
 docker stop $NAME

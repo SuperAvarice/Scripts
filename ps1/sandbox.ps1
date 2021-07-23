@@ -6,13 +6,13 @@ $BASE_IMG = "ubuntu:latest"
 $NAME = "sandbox"
 $USER = "docker"
 $PACKAGES = "openssh-client openssl curl sudo unzip wget vim git docker-compose"
-$TERRAFORM_VER = "0.14.4" # https://www.terraform.io/downloads.html
+$TERRAFORM_VER = "1.0.3" # https://www.terraform.io/downloads.html
 $TERRAFORM_ZIP = "https://releases.hashicorp.com/terraform/${TERRAFORM_VER}/terraform_${TERRAFORM_VER}_linux_amd64.zip"
 $HOME_DIR = "home_data" # Persistent volume for the home directory
 
 $SETUP_FILE = "${SCRIPT_PATH}\setup.ps1"
 if (!(Test-Path $SETUP_FILE)) {
-    Add-Content $SETUP_FILE "`$BASE_DIR `= `"D:\Workspace`""
+    Add-Content $SETUP_FILE "`$BASE_DIR `= `"C:\Workspace`""
 }
 . $SETUP_FILE
 
