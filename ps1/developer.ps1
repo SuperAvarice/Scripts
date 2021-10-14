@@ -1,9 +1,9 @@
 #Set-ExecutionPolicy -ExecutionPolicy Unrestricted
 $SCRIPT_PATH = split-path -parent $PSCommandPath
 
-$IMAGE_TAG = "terraform"
+$IMAGE_TAG = "developer"
 $BASE_IMG = "ubuntu:latest"
-$NAME = "terraform"
+$NAME = "developer"
 $USER = "docker"
 $PACKAGES = "openssh-client openssl curl sudo gnupg software-properties-common unzip wget vim git docker-compose"
 $HOME_DIR = "home_data" # Persistent volume for the home directory
