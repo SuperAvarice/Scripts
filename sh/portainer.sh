@@ -1,6 +1,7 @@
 #!/bin/bash
 IMAGE="portainer/portainer-ce"
 NAME="portainer"
+DATA="portainer-data"
 PASS="super_secret_pw"
 
 if [[ -z "$@" ]]; then
@@ -15,9 +16,11 @@ case "$1" in
     ;;
     start)
         PASS_HASH=$(docker run --rm httpd:2.4-alpine htpasswd -nbB admin "$PASS" | cut -d ":" -f 2)
+		docker volume create $DATA
         docker run \
         -d --restart always \
         -v /var/run/docker.sock:/var/run/docker.sock \
+		-v $DATA:/data \
         -p 9000:9000 \
         --name=$NAME \
         $IMAGE --admin-password "$PASS_HASH" -H unix:///var/run/docker.sock
