@@ -14,6 +14,7 @@ if (!(Test-Path $SETUP_FILE)) {
 }
 . $SETUP_FILE
 
+Set-Location "${SCRIPT_PATH}"
 
 $cmdOutput = docker images -q $IMAGE_TAG
 if ($cmdOutput.length -lt 4) {
