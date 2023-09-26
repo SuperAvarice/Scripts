@@ -4,8 +4,8 @@ NAME="pihole"
 IMAGE="pihole/pihole"
 BASE_DIR="/docker/appdata/pihole"
 NETWORK="172.16.0"
-SERVERIP="172.16.0.200"
-PASSWD="**************"
+SERVERIP="200"
+#PASSWD="**************"
 
 if [[ -z "$@" ]]; then
   echo >&2 "Usage: $0 <command>"
@@ -25,13 +25,14 @@ case "$1" in
         -p 80:80/tcp \
         -e TZ="America/Chicago" \
         -e WEBPASSWORD="${PASSWD}" \
-        -e ServerIP="${SERVERIP}" \
+        -e ServerIP="${NETWORK}.${SERVERIP}" \
         -e REV_SERVER="true" \
         -e REV_SERVER_TARGET="${NETWORK}.1" \
         -e REV_SERVER_DOMAIN="local" \
         -e REV_SERVER_CIDR="${NETWORK}.0/24" \
         -v "${BASE_DIR}/etc/:/etc/pihole/" \
         -v "${BASE_DIR}/dnsmasqd/:/etc/dnsmasq.d/" \
+        -v "${BASE_DIR}/css/lcars.css:/var/www/html/admin/style/themes/lcars.css" \
         -v "/etc/timezone:/etc/timezone:ro" \
         -v "/etc/localtime:/etc/localtime:ro" \
         --dns=127.0.0.1 --dns=1.1.1.1 \
