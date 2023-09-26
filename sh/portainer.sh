@@ -1,8 +1,9 @@
 #!/bin/bash
+
 IMAGE="portainer/portainer-ce"
 NAME="portainer"
 DATA="portainer-data"
-PASS="y56s1Csn0wn1Hn05iZDFdLkZai3GIZIRwZFjgbdy2rJilu98I9"
+PASS=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c20)
 
 if [[ -z "$@" ]]; then
     echo >&2 "Usage: $0 <command>"

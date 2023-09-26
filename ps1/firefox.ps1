@@ -1,6 +1,6 @@
 $IMAGE="jlesage/firefox"
 $NAME="firefox"
-$VNCPASS="1yG46gsc" # Some 8 character password for the web interface
+$VNCPASS= -join ((48..57) + (65..90) + (97..122) | Get-Random -Count 8 | ForEach-Object {[char]$_})
 
 docker pull $IMAGE
 docker stop $NAME
