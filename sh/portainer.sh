@@ -2,7 +2,7 @@
 IMAGE="portainer/portainer-ce"
 NAME="portainer"
 DATA="portainer-data"
-PASS="super_secret_pw"
+PASS="y56s1Csn0wn1Hn05iZDFdLkZai3GIZIRwZFjgbdy2rJilu98I9"
 
 if [[ -z "$@" ]]; then
     echo >&2 "Usage: $0 <command>"
