@@ -1,15 +1,17 @@
 #!/bin/bash
 
 NAME="pihole"
-IMAGE="pihole/pihole"
-BASE_DIR="/docker/appdata/pihole"
+IMAGE="pihole/pihole:latest"
+DATA="/docker/appdata/pihole"
+TIME_ZONE="America/Chicago"
 NETWORK="172.16.0"
-SERVERIP="172.16.0.200"
-PASSWD="**************"
+SERVER_IP="200"
+DOMAIN="local"
+THEME="lcars"
 
 if [[ -z "$@" ]]; then
   echo >&2 "Usage: $0 <command>"
-  echo >&2 "command = pull, start, stop, rm, update"
+  echo >&2 "command = pull, start, stop, rm, setpass, update"
   exit 1
 fi
 
@@ -23,15 +25,16 @@ case "$1" in
         --hostname $NAME \
         -p 53:53/tcp -p 53:53/udp \
         -p 80:80/tcp \
-        -e TZ="America/Chicago" \
-        -e WEBPASSWORD="${PASSWD}" \
-        -e ServerIP="${SERVERIP}" \
+        -e TZ="${TIME_ZONE}" \
+        -e FTLCONF_LOCAL_IPV4="${NETWORK}.${SERVER_IP}" \
         -e REV_SERVER="true" \
         -e REV_SERVER_TARGET="${NETWORK}.1" \
-        -e REV_SERVER_DOMAIN="local" \
+        -e REV_SERVER_DOMAIN="${DOMAIN}" \
         -e REV_SERVER_CIDR="${NETWORK}.0/24" \
-        -v "${BASE_DIR}/etc/:/etc/pihole/" \
-        -v "${BASE_DIR}/dnsmasqd/:/etc/dnsmasq.d/" \
+        -e WEBTHEME="${THEME}" \
+        -e TEMPERATUREUNIT="f" \
+        -v "${DATA}/etc/:/etc/pihole/" \
+        -v "${DATA}/dnsmasqd/:/etc/dnsmasq.d/" \
         -v "/etc/timezone:/etc/timezone:ro" \
         -v "/etc/localtime:/etc/localtime:ro" \
         --dns=127.0.0.1 --dns=1.1.1.1 \
@@ -44,6 +47,9 @@ case "$1" in
     ;;
     rm)
         docker rm $NAME
+    ;;
+    setpass)
+        docker exec -it $NAME pihole -a -p
     ;;
     update)
         ./$0 stop

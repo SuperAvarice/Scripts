@@ -1,8 +1,7 @@
 $IMAGE="portainer/portainer-ce"
 $NAME="portainer"
 $DATA="portainer-data"
-#$PASS="you_should_probably_change_this"
-$PASS="y56s1Csn0wn1Hn05iZDFdLkZai3GIZIRwZFjgbdy2rJilu98I9"
+$PASS=-join ((48..57) + (65..90) + (97..122) | Get-Random -Count 20 | ForEach-Object {[char]$_})
 
 docker pull $IMAGE
 docker stop $NAME

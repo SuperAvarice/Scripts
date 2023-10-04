@@ -1,8 +1,9 @@
 #!/bin/bash
+
 IMAGE="portainer/portainer-ce"
 NAME="portainer"
 DATA="portainer-data"
-PASS="super_secret_pw"
+PASS=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c20)
 
 if [[ -z "$@" ]]; then
     echo >&2 "Usage: $0 <command>"
