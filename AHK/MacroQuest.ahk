@@ -7,6 +7,7 @@ SetKeyDelay(50)
 global gVersion := "3.3"
 global gToggle := false
 global WorkerActive := false
+global debugMode := false
 
 ; Defines
 global INI_FILE := "MacroQuest.ini"
@@ -26,11 +27,12 @@ TheGui.MarginY := 20
 
 TheGui.ScriptButton := TheGui.Add("Button", "xm y+50 w100", "Start")
 TheGui.ScriptButton.OnEvent("Click", Script_Btn)
-TheGui.ProgressCtrl := TheGui.Add("Progress", "xm y+5 w100 h20 cBlue")
+TheGui.ProgressCtrl := TheGui.Add("Progress", "xm y+5 w100 h10 cBlue")
+TheGui.ProgressCtrl.Opt("BackgroundSilver")
 TheGui.Add("Text", "xm y+15 w110", "Target Window Name")
 TheGui.TargetWindowName := TheGui.Add("Edit", "xm y+5 w100")
 TheGui.Add("Button", "xm y+20 w100", "Save").OnEvent("Click", Save_Btn)
-TheGui.Add("Button", "xm y+5 w100", "Exit").OnEvent("Click", (*)=> ExitApp())
+TheGui.Add("Button", "xm y+5 w100", "Exit").OnEvent("Click", (*) => ExitApp())
 TheGui.Add("Text", "xm y+15 w120", "Usage: Hot Buttons are pressed in sequential order (1 - 10). Delay in seconds after button press.")
 
 TheGui.Add("Text", "xm+135 ym w50", "Enabled")
@@ -49,7 +51,6 @@ Loop (9) {
 
 Load_Data() ; set defaults
 TheGui.Show()
-
 SetTimer(TimerWorkerFunction, 1000)
 
 ; ---------------- Functions ----------------
@@ -114,18 +115,22 @@ WorkerFunction() {
  
     index := 1
     while (gToggle) {
-        if (WinExist(TheGui.TargetWindowName.Value)) {
-            WinActivate()
-        } else {
-            gToggle := false
-            MsgBox("Window (EverQuest) not found!", "Alert", "0x1000")
-            return
+        if (!debugMode) {
+            if (WinExist(TheGui.TargetWindowName.Value)) {
+                WinActivate()
+            } else {
+                gToggle := false
+                MsgBox("Window (EverQuest) not found!", "Alert", "0x1000")
+                return
+            }
         }
         strKey := (index != 10) ? String(index) : "0" 
         if (TheGui.CheckBoxArray[index].Value = 1) {
             TheGui.CheckBoxArray[index].Opt("+Disabled")
             TheGui.EditArray[index].Opt("+Disabled")
-            Send(strKey)
+            if (!debugMode) {
+                Send(strKey)
+            }
             TheGui.ProgressCtrl.Value := 0
             increment := Float(10 / TheGui.EditArray[index].Value)
             count := Float(0)
