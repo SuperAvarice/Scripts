@@ -2,18 +2,24 @@
 #SingleInstance Force
 Persistent
 
-Global version := "4.1"
+global version := "4.1"
+global toggle := false
 
 SetNumlockState("AlwaysOn")
 SetCapsLockState("AlwaysOff")
 SetScrollLockState("AlwaysOff")
-;SetTimer(TimerFunction, 60000)
+SetTimer(TimerFunction, 60000)
 SetupMenu()
 
 ; Paste without formatting
 ^+v::{ ; Ctrl+Shift+v
     A_Clipboard := A_Clipboard ; Convert any copied files, HTML, or other formatted text to plain text
     SendInput("^v")
+}
+
+; Move function toggle
+^+s::{ ; Ctrl+Shift+s
+    global toggle := !toggle
 }
 
 ; Disable Left Windows Key
@@ -24,10 +30,11 @@ SetupMenu() {
     tray.delete()
     tray.add()
     tray.add("About", MenuAbout)
-    tray.add("Exit", MenuExit)
+    tray.add("Exit", (*) => ExitApp())
 }
 
 MenuAbout(*) {
+    status := (toggle) ? "ON" : "OFF"
     text := "Auto Macros v" . version
     text .= "`n - Paste without formatting. Ctrl+Shift+v"
     text .= "`n - Caps Lock set to always off"
@@ -35,15 +42,12 @@ MenuAbout(*) {
     text .= "`n - Num Lock set to always on"
     text .= "`n - Left Windows Key Disabled"
     text .= "`n - Mouse/Screen move function"
+    text .= "`n     Ctrl+Shift+s (Status: " . status . ")"    
     MsgBox(text, "About")
 }
 
-MenuExit(*) {
-    ExitApp()
-}
-
 TimerFunction() {
-    if (A_TimeIdle > 60000) {
+    if (A_TimeIdle > 60000 && toggle) {
         Sleep(Random(1, 60000))
         MouseMove(10, 10, 10, "R")
         MouseMove(-10, -10, 10, "R")
