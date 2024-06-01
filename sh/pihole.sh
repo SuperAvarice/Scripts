@@ -6,8 +6,9 @@ DATA="/docker/appdata/pihole"
 TIME_ZONE="America/Chicago"
 NETWORK="172.16.0"
 SERVER_IP="200"
-DOMAIN="local"
+DOMAIN="lan"
 THEME="lcars"
+TEMP_UNIT="f"
 
 if [[ -z "$@" ]]; then
   echo >&2 "Usage: $0 <command>"
@@ -32,7 +33,7 @@ case "$1" in
         -e REV_SERVER_DOMAIN="${DOMAIN}" \
         -e REV_SERVER_CIDR="${NETWORK}.0/24" \
         -e WEBTHEME="${THEME}" \
-        -e TEMPERATUREUNIT="f" \
+        -e TEMPERATUREUNIT="${TEMP_UNIT}" \
         -v "${DATA}/etc/:/etc/pihole/" \
         -v "${DATA}/dnsmasqd/:/etc/dnsmasq.d/" \
         -v "/etc/timezone:/etc/timezone:ro" \
