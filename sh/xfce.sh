@@ -8,14 +8,11 @@ MY_HOST="localhost"
 
 if [[ -z "$@" ]]; then
     echo >&2 "Usage: $0 <command>"
-    echo >&2 "command = pull, start, stop, rm, update"
+    echo >&2 "command = start, stop, update"
     exit 1
 fi
 
 case "$1" in
-    pull)
-        docker pull ${IMAGE}
-    ;;
     start)
 	docker run -d \
         --name=${NAME} \
@@ -30,14 +27,11 @@ case "$1" in
     ;;
     stop)
         docker stop ${NAME}
-    ;;
-    rm)
         docker rm ${NAME}
     ;;
     update)
         ./$0 stop
-        ./$0 rm
-        ./$0 pull
+        docker pull ${IMAGE}
         ./$0 start
     ;;
     *)

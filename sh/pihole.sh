@@ -4,26 +4,23 @@ NAME="pihole"
 IMAGE="pihole/pihole:latest"
 DATA="/docker/appdata/pihole"
 TIME_ZONE="America/Chicago"
-NETWORK="172.16.0"
-SERVER_IP="200"
+NETWORK="0.0.0"
+SERVER_IP="0"
 DOMAIN="lan"
 THEME="lcars"
 TEMP_UNIT="f"
 
 if [[ -z "$@" ]]; then
   echo >&2 "Usage: $0 <command>"
-  echo >&2 "command = pull, start, stop, rm, setpass, update"
+  echo >&2 "command = start, stop, setpass, update"
   exit 1
 fi
 
 case "$1" in
-    pull)
-        docker pull $IMAGE
-    ;;
     start)
         docker run -d \
-        --name=$NAME \
-        --hostname $NAME \
+        --name=${NAME} \
+        --hostname ${NAME} \
         -p 53:53/tcp -p 53:53/udp \
         -p 80:80/tcp \
         -e TZ="${TIME_ZONE}" \
@@ -41,21 +38,18 @@ case "$1" in
         --dns=127.0.0.1 --dns=1.1.1.1 \
         --cap-add=NET_ADMIN \
         --restart unless-stopped \
-        $IMAGE
+        ${IMAGE}
     ;;
     stop)
-        docker stop $NAME
-    ;;
-    rm)
-        docker rm $NAME
+        docker stop ${NAME}
+        docker rm ${NAME}
     ;;
     setpass)
-        docker exec -it $NAME pihole -a -p
+        docker exec -it ${NAME} pihole -a -p
     ;;
     update)
         ./$0 stop
-        ./$0 rm
-        ./$0 pull
+        docker pull ${IMAGE}
         ./$0 start
     ;;
   *)
