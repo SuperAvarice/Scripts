@@ -8,31 +8,43 @@ NAME="hello-world"
 
 if [[ -z "$@" ]]; then
     echo >&2 "Usage: $0 <command>"
-    echo >&2 "command = start, stop, update"
+    echo >&2 "command = start, stop, clean, update"
     exit 1
 fi
 
-case "$1" in
-    start)
-        #docker volume create ${VOLUME}
-        docker run \
+function start_docker () {
+    #docker volume create ${VOLUME}
+    docker run \
 	    --name=${NAME} \
         ${IMAGE}
-    ;;
+}
+
+function stop_docker () {
+    docker stop ${NAME}
+    docker rm ${NAME}
+}
+
+function clean_docker () {
+    docker builder prune --all --force
+    docker image rm ${IMAGE}
+    #docker volume rm ${VOLUME}
+}
+
+function update_docker () {
+    stop_docker
+    docker pull ${IMAGE}
+    start_docker
+}
+
+case "$1" in
+    start)
+        start_docker ;;
     stop)
-        docker stop ${NAME}
-        docker rm ${NAME}
-    ;;
+        stop_docker ;;
     clean)
-        docker builder prune --all --force
-        docker image rm ${IMAGE}
-        #docker volume rm ${VOLUME}
-    ;;
+        clean_docker ;;
     update)
-        ./$0 stop
-        docker pull ${IMAGE}
-        ./$0 start
-    ;;
+        update_docker ;;
     *)
         echo "$0: Error: Invalid option: $1"
         exit 1

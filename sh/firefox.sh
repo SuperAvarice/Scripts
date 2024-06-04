@@ -12,32 +12,44 @@ if [[ -z "$@" ]]; then
     exit 1
 fi
 
+function start_docker () {
+    docker volume create ${VOLUME}
+    docker run -d --rm \
+        --name=${NAME} \
+        -p ${PORT_MAP} \
+        -v ${VOLUME}:/config \
+        -e DARK_MODE=1 \
+        -e KEEP_APP_RUNNING=1 \
+        ${IMAGE}
+    echo "connect: http://${MY_HOST}:5801/"
+}
+
+function stop_docker () {
+    docker stop ${NAME}
+    docker rm ${NAME}
+}
+
+function clean_docker () {
+    docker builder prune --all --force
+    docker image rm ${IMAGE}
+    docker volume rm ${VOLUME}
+}
+
+function update_docker () {
+    stop_docker
+    docker pull ${IMAGE}
+    start_docker
+}
+
 case "$1" in
     start)
-        docker volume create ${VOLUME}
-        docker run -d --rm \
-            --name=${NAME} \
-            -p ${PORT_MAP} \
-            -v ${VOLUME}:/config \
-            -e DARK_MODE=1 \
-            -e KEEP_APP_RUNNING=1 \
-            ${IMAGE}
-        echo "connect: http://${MY_HOST}:5801/"
-    ;;
+        start_docker ;;
     stop)
-        docker stop ${NAME}
-        docker rm ${NAME}
-    ;;
+        stop_docker ;;
     clean)
-        docker builder prune --all --force
-        docker image rm ${IMAGE}
-        docker volume rm ${VOLUME}
-    ;;
+        clean_docker ;;
     update)
-        ./$0 stop
-        docker pull ${IMAGE}
-        ./$0 start
-    ;;
+        update_docker ;;
     *)
         echo "$0: Error: Invalid option: $1"
         exit 1

@@ -11,14 +11,13 @@ THEME="lcars"
 TEMP_UNIT="f"
 
 if [[ -z "$@" ]]; then
-  echo >&2 "Usage: $0 <command>"
-  echo >&2 "command = start, stop, setpass, update"
-  exit 1
+    echo >&2 "Usage: $0 <command>"
+    echo >&2 "command = start, stop, setpass, clean, update"
+    exit 1
 fi
 
-case "$1" in
-    start)
-        docker run -d \
+function start_docker () {
+    docker run -d \
         --name=${NAME} \
         --hostname ${NAME} \
         -p 53:53/tcp -p 53:53/udp \
@@ -39,21 +38,42 @@ case "$1" in
         --cap-add=NET_ADMIN \
         --restart unless-stopped \
         ${IMAGE}
-    ;;
+}
+
+function stop_docker () {
+    docker stop ${NAME}
+    docker rm ${NAME}
+}
+
+function setpass_docker () {
+    docker exec -it ${NAME} pihole -a -p
+}
+
+function clean_docker () {
+    docker builder prune --all --force
+    docker image rm ${IMAGE}
+    docker volume rm ${VOLUME}
+}
+
+function update_docker () {
+    stop_docker
+    docker pull ${IMAGE}
+    start_docker
+}
+
+case "$1" in
+    start)
+        start_docker ;;
     stop)
-        docker stop ${NAME}
-        docker rm ${NAME}
-    ;;
+        stop_docker ;;
     setpass)
-        docker exec -it ${NAME} pihole -a -p
-    ;;
+        setpass_docker ;;
+    clean)
+        clean_docker ;;
     update)
-        ./$0 stop
-        docker pull ${IMAGE}
-        ./$0 start
+        update_docker ;;
+    *)
+        echo "$0: Error: Invalid option: $1"
+        exit 1
     ;;
-  *)
-    echo "$0: Error: Invalid option: $1"
-    exit 1
-  ;;
 esac

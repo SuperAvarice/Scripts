@@ -14,13 +14,12 @@ ADVERTISE_IP="http://0.0.0.0:32400/"
 
 if [[ -z "$@" ]]; then
     echo >&2 "Usage: $0 <command>"
-    echo >&2 "command = start, stop, update"
+    echo >&2 "command = start, stop, clean, update"
     exit 1
 fi
 
-case "$1" in
-    start)
-        docker run -d \
+function start_docker () {
+    docker run -d \
 	    --name=${NAME} \
         --network=host \
         --device /dev/dri:/dev/dri \
@@ -35,19 +34,36 @@ case "$1" in
         -v ${MEDIA_DIR}/transcode:/transcode \
         -v ${DATA_DIR}/config:/config \
         ${IMAGE}
-    ;;
+}
+
+function stop_docker () {
+    docker stop ${NAME}
+    docker rm ${NAME}
+}
+
+function clean_docker () {
+    docker builder prune --all --force
+    docker image rm ${IMAGE}
+    docker volume rm ${VOLUME}
+}
+
+function update_docker () {
+    stop_docker
+    docker pull ${IMAGE}
+    start_docker
+}
+
+case "$1" in
+    start)
+        start_docker ;;
     stop)
-        docker stop ${NAME}
-        docker rm ${NAME}
-    ;;
+        stop_docker ;;
+    clean)
+        clean_docker ;;
     update)
-        ./$0 stop
-        docker pull ${IMAGE}
-        ./$0 start
-    ;;
+        update_docker ;;
     *)
         echo "$0: Error: Invalid option: $1"
         exit 1
     ;;
 esac
-

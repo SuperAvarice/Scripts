@@ -8,32 +8,48 @@ MY_HOST="localhost"
 
 if [[ -z "$@" ]]; then
     echo >&2 "Usage: $0 <command>"
-    echo >&2 "command = start, stop, update"
+    echo >&2 "command = start, stop, clean, update"
     exit 1
 fi
 
-case "$1" in
-    start)
-	docker run -d \
+function start_docker () {
+    docker run -d \
         --name=${NAME} \
         --user $(id -u):$(id -g) \
         -p 5901:5901 \
         -p 6901:6901 \
         -e VNC_RESOLUTION="1920x1080" \
         ${IMAGE}
-        echo "connect via VNC viewer host:5901"
-        echo "connect via noVNC HTML5 full client: http://${MY_HOST}:6901/vnc.html?password=vncpassword"
-        echo "connect via noVNC HTML5 lite client: http://${MY_HOST}:6901/?password=vncpassword"
-    ;;
+    echo "connect via VNC viewer host:5901"
+    echo "connect via noVNC HTML5 full client: http://${MY_HOST}:6901/vnc.html?password=vncpassword"
+    echo "connect via noVNC HTML5 lite client: http://${MY_HOST}:6901/?password=vncpassword"
+}
+
+function stop_docker () {
+    docker stop ${NAME}
+    docker rm ${NAME}
+}
+
+function clean_docker () {
+    docker builder prune --all --force
+    docker image rm ${IMAGE}
+}
+
+function update_docker () {
+    stop_docker
+    docker pull ${IMAGE}
+    start_docker
+}
+
+case "$1" in
+    start)
+        start_docker ;;
     stop)
-        docker stop ${NAME}
-        docker rm ${NAME}
-    ;;
+        stop_docker ;;
+    clean)
+        clean_docker ;;
     update)
-        ./$0 stop
-        docker pull ${IMAGE}
-        ./$0 start
-    ;;
+        update_docker ;;
     *)
         echo "$0: Error: Invalid option: $1"
         exit 1
