@@ -4,6 +4,7 @@ IMAGE="portainer/portainer-ce"
 NAME="portainer"
 VOLUME="portainer-data"
 PASS=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c20)
+PORT_MAP="9000:9000"
 
 if [[ -z "$@" ]]; then
     echo >&2 "Usage: $0 <command>"
@@ -15,11 +16,11 @@ function start_docker () {
     PASS_HASH=$(docker run --rm httpd:2.4-alpine htpasswd -nbB admin "${PASS}" | cut -d ":" -f 2)
     docker volume create ${VOLUME}
     docker run -d \
+        --name=${NAME} \
         --restart always \
         -v /var/run/docker.sock:/var/run/docker.sock \
         -v ${VOLUME}:/data \
-        -p 9000:9000 \
-        --name=${NAME} \
+        -p ${PORT_MAP} \
         ${IMAGE} --admin-password "${PASS_HASH}" -H unix:///var/run/docker.sock
     echo "Go to -- http://localhost:9000 | Admin Password: ${PASS}"
 }
