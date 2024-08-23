@@ -6,8 +6,8 @@
 IMAGE="plexinc/pms-docker:latest"
 NAME="plex"
 SERVER_NAME="PlexServer"
-DATA_DIR="/docker/appdata/plex"
-MEDIA_DIR="/media"
+DATA_DIR="/docker/appdata/plex" # Configs for Plex
+MEDIA_DIR="/media" # Mounts for content on NAS (RO) and mounts for dvr and transcode (RW)
 TIME_ZONE="America/Chicago"
 PLEX_CLAIM="claim-**************"
 ADVERTISE_IP="http://0.0.0.0:32400/"

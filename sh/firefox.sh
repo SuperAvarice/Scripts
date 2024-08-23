@@ -3,7 +3,8 @@
 IMAGE="jlesage/firefox"
 NAME="firefox"
 VOLUME="firefox-data"
-PORT_MAP="5801:5800" 
+HOST_PORT="5801"
+PORT_MAP="${HOST_PORT}:5800"
 MY_HOST="localhost"
 
 if [[ -z "$@" ]]; then
@@ -21,7 +22,7 @@ function start_docker () {
         -e DARK_MODE=1 \
         -e KEEP_APP_RUNNING=1 \
         ${IMAGE}
-    echo "connect: http://${MY_HOST}:5801/"
+    echo "connect: http://${MY_HOST}:${HOST_PORT}/"
 }
 
 function stop_docker () {

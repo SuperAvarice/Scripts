@@ -4,7 +4,9 @@ IMAGE="portainer/portainer-ce"
 NAME="portainer"
 VOLUME="portainer-data"
 PASS=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c20)
-PORT_MAP="9000:9000"
+HOST_PORT="9000"
+PORT_MAP="${HOST_PORT}:9000"
+MY_HOST="localhost"
 
 if [[ -z "$@" ]]; then
     echo >&2 "Usage: $0 <command>"
@@ -22,7 +24,7 @@ function start_docker () {
         -v ${VOLUME}:/data \
         -p ${PORT_MAP} \
         ${IMAGE} --admin-password "${PASS_HASH}" -H unix:///var/run/docker.sock
-    echo "Go to -- http://localhost:9000 | Admin Password: ${PASS}"
+    echo "Go to -- http://${MY_HOST}:${HOST_PORT} | Admin Password: ${PASS}"
 }
 
 function stop_docker () {
