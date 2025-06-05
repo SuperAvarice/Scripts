@@ -1,0 +1,151 @@
+version: '3'
+
+
+volumes:
+    
+    grafana_data: {}
+    mariadb_data: {}
+    prometheus_data: {}
+    postgres_data: {}
+    vm_data: {}
+    vm_data_2: {}
+    vmagent_data: {}
+
+
+services:
+
+    mariadb:
+        image: "${MARIADB_IMAGE}"
+        restart: "always"
+        environment:
+            MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+            MYSQL_DATABASE: "grafana"
+            MYSQL_USER: "grafana"
+            MYSQL_PASSWORD: "${DB_PW}"
+        volumes:
+            - mariadb_data:/var/lib/mysql
+            - ${ROOT_DIR}/mariadb/server.cnf:/etc/mysql/conf.d/server.cnf
+        ulimits:
+            nofile:
+                soft: 40000
+                hard: 80000
+
+    renderer:
+        image: "${RENDERER_IMAGE}"
+        restart: "always"
+
+    grafana:
+        image: "${GRAFANA_IMAGE}"
+        restart: "always"
+        environment:
+            GF_DATABASE_TYPE: "mysql"
+            GF_DATABASE_HOST: "mariadb:3306"
+            GF_DATABASE_NAME: "grafana"
+            GF_DATABASE_USER: "grafana"
+            GF_DATABASE_PASSWORD: "${DB_PW}"
+            GF_DATABASE_MAX_IDLE_CONN: "1000"
+            GF_ANALYTICS_REPORTING_ENABLED: "false"
+            GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+            GF_SECURITY_ADMIN_USER: "${ADMIN_USER}"
+            GF_SECURITY_ADMIN_PASSWORD: "${ADMIN_PW}"
+            GF_AUTH_ANONYMOUS_ENABLED: "${ANONYMOUS_ENABLED}"
+            GF_AUTH_ANONYMOUS_ORG_ROLE: "Viewer"
+            GF_USERS_ALLOW_SIGN_UP: "false"
+            GF_SNAPSHOTS_EXTERNAL_ENABLED: "false"
+            GF_LOG_MODE: "file"
+            GF_LOG_LEVEL: "warn"
+            GF_LOG_FILE_LOG_ROTATE: "true"
+            GF_LOG_FILE_DAILY_ROTATE: "true"
+            GF_LOG_FILE_MAX_DAYS: "10"
+            GF_RENDERING_SERVER_URL: "http://renderer:8081/render"
+            GF_RENDERING_CALLBACK_URL: "http://grafana:3000/"
+            HTTPS_PROXY: "${http_proxy}"
+            HTTP_PROXY: "${http_proxy}"
+            NO_PROXY: "${no_proxy},localhost,renderer,grafana,mariadb,prometheus,victoriametrics,victoriametrics-2"
+        ports:
+            - "3000:3000"
+        volumes:
+            - grafana_data:/var/lib/grafana
+            - ${ROOT_DIR}/grafana/provisioning/:/etc/grafana/provisioning/
+        depends_on:
+            - mariadb
+            - renderer
+
+    telegraf:
+        image: "${TELEGRAF_IMAGE}"
+        restart: "always"
+        user: "telegraf:${DOCKER_GID}"
+        environment:
+            HOST_ETC: "/hostfs/etc"
+            HOST_PROC: "/hostfs/proc"
+            HOST_SYS: "/hostfs/sys"
+            HOST_VAR: "/hostfs/var"
+            HOST_RUN: "/hostfs/run"
+            HOST_MOUNT_PREFIX: "/hostfs"
+        volumes:
+            - /:/hostfs:ro
+            - ${ROOT_DIR}/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+            - /var/run/docker.sock:/var/run/docker.sock
+
+    postgres:
+        image: "${POSTGRES_IMAGE}"
+        restart: "always"
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+            - ${ROOT_DIR}/postgres/init-user-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh
+        environment:
+            POSTGRES_PASSWORD: "${DB_PW}"
+            POSTGRES_USER: postgres
+        
+    prometheus:
+        image: "${PROMETHEUS_IMAGE}"
+        restart: "always"
+        volumes:
+            - ${ROOT_DIR}/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+            - prometheus_data:/prometheus
+        command:
+            - '--config.file=/etc/prometheus/prometheus.yml'
+            - '--storage.tsdb.path=/prometheus'
+            - '--web.console.libraries=/etc/prometheus/console_libraries'
+            - '--web.console.templates=/etc/prometheus/consoles'
+            - '--storage.tsdb.retention.time=200h'
+            - '--web.enable-lifecycle'
+
+    victoriametrics:
+        image: "${VICTORIA_IMAGE}"
+        restart: "always"
+        volumes:
+            - vm_data:/storage
+        command:
+            - "--storageDataPath=/storage"
+
+    victoriametrics-2:
+        image: "${VICTORIA_IMAGE}"
+        restart: "always"
+        volumes:
+            - vm_data_2:/storage
+        command:
+            - "--storageDataPath=/storage"
+
+    vmagent:
+        image: "${VMAGENT_IMAGE}"
+        restart: "always"
+        depends_on:
+            - victoriametrics
+            - victoriametrics-2
+        volumes:
+            - vmagent_data:/vmagentdata
+            - ${ROOT_DIR}/vmagent/vma-drop-list.yml:/etc/prometheus/vma-drop-list.yml
+            - ${ROOT_DIR}/vmagent/vma-allow-list.yml:/etc/prometheus/vma-allow-list.yml
+        ports:
+            - "8429:8429"
+        command:
+            - "--remoteWrite.queues=64"
+            - "--remoteWrite.maxDiskUsagePerURL=250000000000"
+            - "--remoteWrite.tmpDataPath=/vmagentdata"
+            - "--remoteWrite.url=http://victoriametrics-2:8428/api/v1/write"
+            - "--remoteWrite.urlRelabelConfig=/etc/prometheus/vma-allow-list.yml"
+            - "--remoteWrite.url=http://victoriametrics:8428/api/v1/write"
+            - "--remoteWrite.urlRelabelConfig=/etc/prometheus/vma-drop-list.yml"
+            #- "--remoteWrite.relabelDebug"
+    

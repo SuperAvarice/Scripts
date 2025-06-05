@@ -1,0 +1,11 @@
+#- action: keep
+#  source_labels: [__name__]
+#  regex: "disk_total"
+
+# https://docs.victoriametrics.com/vmagent.html#relabeling
+
+- action: keep_metrics
+  regex:
+    - "disk_free"
+    - "swap_free"
+    - "cpu_usage_idle"
