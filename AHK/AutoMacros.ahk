@@ -2,28 +2,36 @@
 #SingleInstance Force
 Persistent
 
-global version := "4.2"
-global toggle := false
+; Defines
+global VERSION := "5.1"
+global MAX_COUNTS := 5 ; 30
+global TIMEOUT := 10000 ; 60000
+;global DESKTOP_FILES := EnvGet("OneDrive") . "\Desktop\*.lnk"
+
+; Globals
+global gToggle := false
+global gCount := 0
 
 SetNumlockState("AlwaysOn")
 SetCapsLockState("AlwaysOff")
 SetScrollLockState("AlwaysOff")
-SetTimer(TimerFunction, 60000)
+SetTimer(TimerFunction, TIMEOUT)
 SetupMenu()
 
 ; Paste without formatting
-; ^+v::{ ; Ctrl+Shift+v
-;     A_Clipboard := A_Clipboard ; Convert any copied files, HTML, or other formatted text to plain text
+; Convert any copied files, HTML, or other formatted text to plain text
+; ^+v:: { ; Ctrl+Shift+v
+;     A_Clipboard := A_Clipboard
 ;     SendInput("^v")
 ; }
 
 ; Move function toggle
-^+s::{ ; Ctrl+Shift+s
-    global toggle := !toggle
+^+s:: { ; Ctrl+Shift+s
+    global gToggle := !gToggle
 }
 
 ; Disable Left Windows Key
-LWin::return
+LWin:: return
 
 SetupMenu() {
     tray := A_TrayMenu
@@ -34,8 +42,8 @@ SetupMenu() {
 }
 
 MenuAbout(*) {
-    status := (toggle) ? "ON" : "OFF"
-    text := "Auto Macros v" . version
+    status := (gToggle) ? "ON" : "OFF"
+    text := "Auto Macros v" . VERSION
     ; text .= "`n - Paste without formatting. Ctrl+Shift+v"
     text .= "`n - Caps Lock set to always off"
     text .= "`n - Scroll Lock set to always off"
@@ -47,9 +55,31 @@ MenuAbout(*) {
 }
 
 TimerFunction() {
-    if (A_TimeIdle > 60000 && toggle) {
-        Sleep(Random(1, 60000))
-        MouseMove(10, 10, 10, "R")
-        MouseMove(-10, -10, 10, "R")
+    global
+    if (gToggle) {
+        inactive := (A_TimeIdle > TIMEOUT)
+        overcount := (gCount > MAX_COUNTS)
+        if (inactive) {
+            if (!overcount) {
+                TrayTip("Auto Macros v" . VERSION, "Pre-Sleep: " . gCount)
+                Sleep(Random(1, TIMEOUT))
+                MouseMove(10, 10, 10, "R")
+                MouseMove(-10, -10, 10, "R")
+                gCount++
+                return
+            }
+            TrayTip("Auto Macros v" . VERSION, "Sleep Mode")
+            return
+        }
+        if (gCount > 1) {
+            TrayTip("Auto Macros v" . VERSION, "Limbo")
+            return
+        }
     }
+    gCount := 0
+    TrayTip("Auto Macros v" . VERSION, "OFF")
+
+    ; if (FileExist(DESKTOP_FILES)) {
+    ;     FileDelete(DESKTOP_FILES)
+    ; }
 }
