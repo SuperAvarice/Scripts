@@ -1,4 +1,6 @@
-# Set-ExecutionPolicy -ExecutionPolicy Unrestricted --||-- Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+# Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Bypass
+
+ # Windows Podman Desktop installed with Docker Compatibility mode, rootful.
 
 $VARS_FILE = "$PSScriptRoot\vars.cfg"
 if (!(Test-Path $VARS_FILE)) {
@@ -16,12 +18,16 @@ $BASE_DIR = "C:\workspace"
 $BASE_IMAGE = "$IMAGE_NAME"
 $WORKING_DIR = "$PSScriptRoot"
 $ARCHIVE_VERSION = "$IMAGE-$BUILD_VERSION.tar"
+$PODMAN_SOCKET = $env:PODMAN_SOCKET
+if ([string]::IsNullOrWhiteSpace($PODMAN_SOCKET)) {
+    $PODMAN_SOCKET = "/run/podman/podman.sock"
+}
 
 Push-Location "${WORKING_DIR}"
 
 if ($args.count -lt 1) {
     Write-Host "Usage: ./tool.ps1 <commnad>"
-    Write-Host "command = clean, build, package, load, run"
+    Write-Host "command = clean, build, run"
     Pop-Location
     exit 1
 }
@@ -29,45 +35,45 @@ $arg = $args[0]
 
 switch ($arg) {
     "clean" {
-        docker builder prune --all --force
-        docker volume rm ${HOME_DIR}
-        docker image rm ${image}
+        podman builder prune --all --force
+        podman volume rm ${HOME_DIR}
+        podman image rm ${IMAGE}
     }
     "build" {
-        Write-Host "Building custom docker image ..."
-        docker build --pull `
+        Write-Host "Building custom podman image ..."
+        podman build --pull `
             --build-arg "BASE_IMAGE=${BASE_IMAGE}" `
             --build-arg "DOCKER_USER=${DOCKER_USER}" `
             --build-arg "PACKAGES=${PACKAGES}" `
             --tag=${IMAGE} `
             -f build/Dockerfile .
      }
-    "package" {
-        Write-Host "Saving image to file ${WORKING_DIR}\${ARCHIVE_VERSION}"
-        docker save ${IMAGE} -o "${WORKING_DIR}\${ARCHIVE_VERSION}"
-    }
-    "load" {
-        docker image rm ${IMAGE}
-        docker load -i $args[1]
-    }
     "run" {
         Write-Host ""
         Write-Host "Base Image: ${BASE_IMAGE}"
         Write-Host "This Image: ${IMAGE}"
         Write-Host "This Container: ${CONTAINER_NAME}"
+        Write-Host "Host User: ${USER}"
         Write-Host "Volume: /workspace is a file system mount to `"${BASE_DIR}`""
-        Write-Host "Volume: /home/${DOCKER_USER} is a docker volume mapped to `"${HOME_DIR}`""
+        Write-Host "Volume: /home/${DOCKER_USER} is a podman volume mapped to `"${HOME_DIR}`""
+        Write-Host "Podman Socket: ${PODMAN_SOCKET}"
         Write-Host ""
 
-        docker volume create ${HOME_DIR}
-        docker run -it --rm `
+        podman volume inspect ${HOME_DIR} 2>&1 | Out-Null
+        if ($LASTEXITCODE -ne 0) { podman volume create ${HOME_DIR} }
+
+        podman run --rm -it `
             --name=${CONTAINER_NAME} `
             -h ${CONTAINER_NAME} `
-            -e USER=${USER} `
-            -e IS_WINDOWS_HOST=true `
+            --privileged `
+            --device /dev/fuse `
+            --userns=keep-id `
+            --security-opt label=disable `
+            -e PODMAN_SOCKET=${PODMAN_SOCKET} `
+            -e CONTAINER_HOST=unix://${PODMAN_SOCKET} `
+            -v "${PODMAN_SOCKET}:${PODMAN_SOCKET}" `
             -v "${BASE_DIR}:/workspace" `
             -v "${HOME_DIR}:/home/${DOCKER_USER}" `
-            -v /var/run/docker.sock:/var/run/docker.sock `
             ${IMAGE} /bin/bash
     }
     default {

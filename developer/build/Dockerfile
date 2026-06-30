@@ -24,13 +24,14 @@ RUN pip3 install --no-cache-dir --break-system-packages --upgrade awscli && \
     pip3 install --no-cache-dir --break-system-packages -r requirements.txt
 
 # Add the generic user -- https://linux.die.net/man/8/useradd
-RUN useradd -rlm --home ${HOMEDIR} --gid 100 --uid 1000 --groups sudo,docker --shell /bin/bash --password "$(openssl passwd -1 ${DOCKER_USER})" ${DOCKER_USER}
+RUN useradd -rlm --home ${HOMEDIR} --gid 100 --uid 1000 --groups sudo --shell /bin/bash --password "$(openssl passwd -1 ${DOCKER_USER})" ${DOCKER_USER}
 
 # Add user scripts
 ADD bin/* /usr/local/sbin/
 RUN chmod +x /usr/local/sbin/*.sh
 RUN chown -R ${DOCKER_USER}:100 ${HOMEDIR}
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+RUN mkdir -p /etc/containers && echo "[registries.search]\nregistries = ['docker.io']" > /etc/containers/registries.conf;
 
 # Switch to user mode
 USER ${DOCKER_USER}
@@ -41,9 +42,9 @@ RUN echo "" >> ${HOMEDIR}/.bashrc && \
     echo "# Custom Setup ----------" >> ${HOMEDIR}/.bashrc && \
     echo "export PATH=$PATH:~/bin" >> ${HOMEDIR}/.bashrc && \
     echo "export LOGNAME=${DOCKER_USER}" >> ${HOMEDIR}/.bashrc && \
-    echo "[ \${IS_WINDOWS_HOST} = \"true\" ] && sudo chmod 666 /var/run/docker.sock" >> ${HOMEDIR}/.bashrc && \
-    echo "[ ! -f ${HOMEDIR}/.bash_aliases ] && ${HOMEDIR}/bin/setup_aliases.sh" >> ${HOMEDIR}/.bashrc && \
-    echo "echo 'sudo chmod -R g=u /workspace --> Commamnd to sync container to host permissions on linux'" >> ${HOMEDIR}/.bashrc && \
+    echo "if [ -n \"\${PODMAN_SOCKET:-}\" ] && [ -S \"\${PODMAN_SOCKET}\" ]; then sudo chmod 666 \"\${PODMAN_SOCKET}\"; fi" >> ${HOMEDIR}/.bashrc && \
+    echo "[ ! -f ${HOMEDIR}/.bash_aliases ] && /usr/local/sbin/setup_aliases.sh" >> ${HOMEDIR}/.bashrc && \
+    #echo "echo 'sudo chmod -R g=u /workspace --> Commamnd to sync container to host permissions on linux'" >> ${HOMEDIR}/.bashrc && \
     echo "echo 'Packages --> ${PACKAGES}'" >> ${HOMEDIR}/.bashrc && \
     echo "echo ''" >> ${HOMEDIR}/.bashrc && \
     echo "cat ~/.bash_aliases" >> ${HOMEDIR}/.bashrc && \
