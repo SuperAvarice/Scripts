@@ -11,10 +11,9 @@ global debugMode := false
 
 ; Defines
 global INI_FILE := "MacroQuest.ini"
-global DEFAULT_WINDOW_NAME := "Client1"
+global DEFAULT_WINDOW_NAME := "EverQuest Legends" ;"Client1"
 global DEFAULT_DELAY_STR := "1|1|1|1|1|1|1|1|1|30"
 global DEFAULT_ENABLED_STR := "1|1|1|1|1|1|1|1|1|1"
-
 
 ; ---------------- Main ----------------
 
@@ -33,19 +32,20 @@ TheGui.Add("Text", "xm y+15 w110", "Target Window Name")
 TheGui.TargetWindowName := TheGui.Add("Edit", "xm y+5 w100")
 TheGui.Add("Button", "xm y+20 w100", "Save").OnEvent("Click", Save_Btn)
 TheGui.Add("Button", "xm y+5 w100", "Exit").OnEvent("Click", (*) => ExitApp())
-TheGui.Add("Text", "xm y+15 w120", "Usage: Hot Buttons are pressed in sequential order (1 - 10). Delay in seconds after button press.")
+TheGui.Add("Text", "xm y+15 w120",
+    "Usage: Hot Buttons are pressed in sequential order (1 - 10). Delay in seconds after button press.")
 
 TheGui.Add("Text", "xm+135 ym w50", "Enabled")
 TheGui.Add("Text", "xm+190 ym  w25", "Key")
 TheGui.CheckBoxArray := Array()
-Loop (10) {
+loop (10) {
     TheGui.CheckBoxArray.Push(TheGui.Add("CheckBox", "xm+150 y+15 w100", " Hot Button " A_Index))
 }
 
 TheGui.Add("Text", "xm+250 ym w50", "Delay (S)")
 TheGui.EditArray := Array()
 TheGui.EditArray.Push(TheGui.Add("Edit", "xm+250 y+12 h20 w40"))
-Loop (9) {
+loop (9) {
     TheGui.EditArray.Push(TheGui.Add("Edit", "xm+250 y+8 h20 w40"))
 }
 
@@ -89,19 +89,19 @@ Load_Data() {
     TheGui.TargetWindowName.Value := IniRead(INI_FILE, "DATA", "Window_Name", DEFAULT_WINDOW_NAME)
     iniStr := IniRead(INI_FILE, "DATA", "Key_Delay", DEFAULT_DELAY_STR)
     TempArray := StrSplit(iniStr, "|")
-    Loop (10) {
+    loop (10) {
         TheGui.EditArray[A_Index].Value := TempArray[A_Index]
     }
     iniStr := IniRead(INI_FILE, "DATA", "Key_Enabled", DEFAULT_ENABLED_STR)
     TempArray := StrSplit(iniStr, "|")
-    Loop (10) {
+    loop (10) {
         TheGui.CheckBoxArray[A_Index].Value := TempArray[A_Index]
     }
 }
 
 TimerWorkerFunction() {
     global WorkerActive
- 
+
     if (!WorkerActive) {
         WorkerActive := true
         WorkerFunction()
@@ -112,7 +112,7 @@ TimerWorkerFunction() {
 WorkerFunction() {
     global gToggle
     global TheGui
- 
+
     index := 1
     while (gToggle) {
         if (!debugMode) {
@@ -124,7 +124,7 @@ WorkerFunction() {
                 return
             }
         }
-        strKey := (index != 10) ? String(index) : "0" 
+        strKey := (index != 10) ? String(index) : "0"
         if (TheGui.CheckBoxArray[index].Value = 1) {
             TheGui.CheckBoxArray[index].Opt("+Disabled")
             TheGui.EditArray[index].Opt("+Disabled")
@@ -134,7 +134,7 @@ WorkerFunction() {
             TheGui.ProgressCtrl.Value := 0
             increment := Float(10 / TheGui.EditArray[index].Value)
             count := Float(0)
-            Loop (TheGui.EditArray[index].Value * 10) {
+            loop (TheGui.EditArray[index].Value * 10) {
                 Sleep (100)
                 count += increment
                 TheGui.ProgressCtrl.Value := Integer(count)
@@ -145,7 +145,7 @@ WorkerFunction() {
             TheGui.CheckBoxArray[index].Opt("-Disabled")
             TheGui.EditArray[index].Opt("-Disabled")
         }
-        index := (index >= 10) ? 1 : ++index        
+        index := (index >= 10) ? 1 : ++index
     }
     TheGui.ProgressCtrl.Value := 0
     TheGui.ScriptButton.Text := "Start"
