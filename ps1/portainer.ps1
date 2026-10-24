@@ -18,7 +18,7 @@ podman run -d `
 	--restart=always `
     -p 9000:9000 `
 	-v ${DATA}:/data `
-	-v /run/podman/podman.sock:/var/run/docker.sock `
+	-v /run/user/1000/podman/podman.sock:/var/run/docker.sock `
 	$IMAGE --admin-password "$PASSWORD" -H unix:///var/run/docker.sock
 
 write-host "Go to http://localhost:9000"
